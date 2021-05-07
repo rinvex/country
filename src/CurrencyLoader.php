@@ -21,26 +21,31 @@ class CurrencyLoader
     {
         $list = $longlist ? 'longlist' : 'shortlist';
 
-        if (! isset(static::$currencies[$list])) {
-            $countries = CountryLoader::countries($longlist);
+        if (isset(static::$currencies[$list])) {
+            return static::$currencies[$list];
+        }
 
-            foreach ($countries as $country) {
-                if ($longlist) {
-                    foreach ($country['currency'] as $currency => $details) {
-                        static::$currencies[$list][$currency] = $longlist ? $details : $currency;
-                    }
-                } else {
-                    static::$currencies[$list][] = $country['currency'];
+        $countries = CountryLoader::countries($longlist);
+        $currencies = [];
+
+        foreach ($countries as $country) {
+            if (empty($country['currency'])) {
+                continue;
+            }
+
+            if ($longlist) {
+                foreach ($country['currency'] as $currency => $details) {
+                    $currencies[$currency] = $details;
                 }
+            } else {
+                $currencies[$country['currency']] = $country['currency'];
             }
         }
 
-        $currencies = array_filter(array_unique(static::$currencies[$list]), function ($item) {
-            return is_string($item);
-        });
+        ksort($currencies);
 
-        sort($currencies);
+        static::$currencies[$list] = $currencies;
 
-        return array_combine($currencies, $currencies);
+        return $currencies;
     }
 }
